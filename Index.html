@@ -1,0 +1,1880 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>교실 수업 타이머 & 소음 측정기</title>
+    <meta
+      name="description"
+      content="초등학교 교실 전자칠판을 위한 다기능 수업 타이머 및 실시간 교실 소음 측정기 웹 앱"
+    />
+    <meta property="og:title" content="교실 수업 타이머 & 소음 측정기" />
+    <meta
+      property="og:description"
+      content="초등학교 교실 전자칠판을 위한 다기능 수업 타이머 및 실시간 교실 소음 측정기 웹 앱"
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-canvas: #f4f6f9;
+        --bg-surface: #ffffff;
+        --bg-subtle: #edf1f6;
+        --bg-input: #f8fafc;
+        --border-hairline: #dce3ec;
+        --border-strong: #c5d0de;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --accent: #2563eb;
+        --accent-hover: #1d4ed8;
+        --accent-soft: #eff6ff;
+        --accent-text: #ffffff;
+
+        --quiet-color: #16a34a;
+        --quiet-bg: #dcfce7;
+        --quiet-text: #15803d;
+
+        --moderate-color: #eab308;
+        --moderate-bg: #fef9c3;
+        --moderate-text: #a16207;
+
+        --loud-color: #dc2626;
+        --loud-bg: #fee2e2;
+        --loud-text: #b91c1c;
+
+        --shadow-card: 0 4px 20px rgba(15, 23, 42, 0.05);
+        --shadow-banner: 0 18px 40px rgba(185, 28, 28, 0.28);
+        --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.35);
+
+        --font-sans: 'Noto Sans KR', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+        --font-display: 'Outfit', 'Noto Sans KR', sans-serif;
+        --font-mono: 'JetBrains Mono', 'Outfit', monospace;
+      }
+
+      html.dark {
+        --bg-canvas: #0b1120;
+        --bg-surface: #131c31;
+        --bg-subtle: #1b2742;
+        --bg-input: #0f172a;
+        --border-hairline: #253452;
+        --border-strong: #34476e;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --accent: #3b82f6;
+        --accent-hover: #2563eb;
+        --accent-soft: #172554;
+        --accent-text: #ffffff;
+
+        --quiet-color: #22c55e;
+        --quiet-bg: rgba(34, 197, 94, 0.16);
+        --quiet-text: #4ade80;
+
+        --moderate-color: #facc15;
+        --moderate-bg: rgba(250, 204, 21, 0.16);
+        --moderate-text: #fde047;
+
+        --loud-color: #ef4444;
+        --loud-bg: rgba(239, 68, 68, 0.2);
+        --loud-text: #fca5a5;
+
+        --shadow-card: 0 6px 28px rgba(0, 0, 0, 0.35);
+        --shadow-banner: 0 18px 44px rgba(0, 0, 0, 0.65);
+        --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.45);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+        background-color: var(--bg-canvas);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.5;
+        transition: background-color 0.2s ease, color 0.2s ease;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      input {
+        font-family: inherit;
+        color: inherit;
+      }
+
+      button {
+        cursor: pointer;
+        border: none;
+        background: none;
+      }
+
+      button:focus-visible,
+      input:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
+      }
+
+      /* App Shell */
+      .app-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 28px 28px;
+        max-width: 1680px;
+        margin: 0 auto;
+        gap: 20px;
+      }
+
+      /* Top Header */
+      .top-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 4px 4px 12px;
+        border-bottom: 1px solid var(--border-hairline);
+      }
+
+      .brand-group {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .brand-title {
+        font-family: var(--font-display);
+        font-size: clamp(1.25rem, 1.8vw, 1.65rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+        white-space: nowrap;
+      }
+
+      .brand-meta {
+        font-size: 0.9375rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+
+      .header-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 10px 18px;
+        border-radius: 12px;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+      }
+
+      .header-btn:hover {
+        background-color: var(--bg-subtle);
+        border-color: var(--border-strong);
+      }
+
+      .header-btn:active {
+        transform: scale(0.98);
+      }
+
+      .header-btn svg {
+        width: 19px;
+        height: 19px;
+        flex-shrink: 0;
+      }
+
+      /* Floating High-Visibility Noise Warning Banner */
+      .noise-warning-banner {
+        position: fixed;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-140%);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 18px 36px;
+        border-radius: 16px;
+        background-color: #dc2626;
+        color: #ffffff;
+        border: 2px solid #fca5a5;
+        box-shadow: var(--shadow-banner);
+        font-size: clamp(1.4rem, 2.6vw, 2.25rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+      }
+
+      .noise-warning-banner.visible {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+
+      .noise-warning-banner svg {
+        width: clamp(28px, 3vw, 40px);
+        height: clamp(28px, 3vw, 40px);
+        flex-shrink: 0;
+      }
+
+      /* Inline Notice Toast (e.g. Fullscreen blocked or audio info) */
+      .toast-notice {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        z-index: 90;
+        padding: 12px 22px;
+        border-radius: 12px;
+        background-color: var(--text-primary);
+        color: var(--bg-canvas);
+        font-size: 0.95rem;
+        font-weight: 600;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+      }
+
+      .toast-notice.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Main Two-Column Split Workspace */
+      .workspace-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        align-items: stretch;
+      }
+
+      .panel-card {
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        border-radius: 24px;
+        padding: 28px 32px;
+        box-shadow: var(--shadow-card);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 24px;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+      }
+
+      .panel-card.timer-finished {
+        border-color: var(--loud-color);
+      }
+
+      .panel-card.noise-loud {
+        border-color: var(--loud-color);
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border-hairline);
+      }
+
+      .panel-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .panel-icon {
+        width: 28px;
+        height: 28px;
+        color: var(--accent);
+        flex-shrink: 0;
+      }
+
+      .panel-title {
+        font-size: clamp(1.35rem, 1.8vw, 1.75rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+      }
+
+      .panel-status-text {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+
+      .panel-status-text.state-running {
+        color: var(--accent);
+      }
+
+      .panel-status-text.state-warning {
+        color: var(--moderate-text);
+      }
+
+      .panel-status-text.state-finished,
+      .panel-status-text.state-loud {
+        color: var(--loud-text);
+      }
+
+      .panel-status-text.state-quiet {
+        color: var(--quiet-text);
+      }
+
+      /* Massive Center Display Stage (Back-of-classroom legibility) */
+      .display-stage {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        padding: 16px 0;
+        min-height: 230px;
+      }
+
+      .giant-readout {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        font-size: clamp(5.25rem, 10.2vw, 9.75rem);
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.04em;
+        color: var(--text-primary);
+        user-select: none;
+        transition: color 0.2s ease, transform 0.2s ease;
+      }
+
+      .giant-readout.is-warning {
+        color: var(--moderate-text);
+      }
+
+      .giant-readout.is-finished,
+      .giant-readout.is-loud {
+        color: var(--loud-color);
+      }
+
+      .giant-readout.is-quiet {
+        color: var(--quiet-color);
+      }
+
+      .giant-readout.is-moderate {
+        color: var(--moderate-text);
+      }
+
+      /* Timer Progress Track */
+      .timer-progress-wrap {
+        width: 100%;
+        max-width: 560px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .timer-progress-track {
+        width: 100%;
+        height: 16px;
+        background-color: var(--bg-subtle);
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid var(--border-hairline);
+      }
+
+      .timer-progress-fill {
+        height: 100%;
+        width: 100%;
+        background-color: var(--accent);
+        border-radius: 999px;
+        transform-origin: left center;
+        transition: width 0.25s linear, background-color 0.2s ease;
+      }
+
+      .timer-progress-fill.is-warning {
+        background-color: var(--moderate-color);
+      }
+
+      .timer-progress-fill.is-finished {
+        background-color: var(--loud-color);
+      }
+
+      .timer-subinfo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+
+      /* Timer Controls Area */
+      .controls-section {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-hairline);
+      }
+
+      .preset-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+
+      .preset-btn {
+        min-height: 52px;
+        padding: 12px 10px;
+        border-radius: 14px;
+        background-color: var(--bg-subtle);
+        border: 1px solid var(--border-hairline);
+        color: var(--text-primary);
+        font-size: 1.15rem;
+        font-weight: 700;
+        white-space: nowrap;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+      }
+
+      .preset-btn:hover {
+        border-color: var(--accent);
+        background-color: var(--accent-soft);
+      }
+
+      .preset-btn.active {
+        background-color: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-text);
+      }
+
+      .preset-btn:active {
+        transform: scale(0.97);
+      }
+
+      /* Direct Minute/Second Input Row */
+      .custom-time-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .custom-time-label {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        margin-right: 4px;
+        white-space: nowrap;
+      }
+
+      .time-input-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .time-input {
+        width: 76px;
+        min-height: 48px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        border: 1px solid var(--border-strong);
+        background-color: var(--bg-input);
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        font-size: 1.25rem;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .time-unit {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+      }
+
+      .apply-btn {
+        min-height: 48px;
+        padding: 10px 20px;
+        border-radius: 12px;
+        background-color: var(--bg-subtle);
+        border: 1px solid var(--border-strong);
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 700;
+        white-space: nowrap;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .apply-btn:hover {
+        background-color: var(--accent-soft);
+        border-color: var(--accent);
+      }
+
+      .sound-test-btn {
+        margin-left: auto;
+        min-height: 44px;
+        padding: 8px 14px;
+        border-radius: 10px;
+        color: var(--text-secondary);
+        font-size: 0.92rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+        transition: background-color 0.15s ease, color 0.15s ease;
+      }
+
+      .sound-test-btn:hover {
+        background-color: var(--bg-subtle);
+        color: var(--text-primary);
+      }
+
+      .sound-test-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* Action Buttons Row (Start, Pause, Reset) */
+      .action-row {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr;
+        gap: 12px;
+      }
+
+      .action-btn {
+        min-height: 60px;
+        padding: 14px 18px;
+        border-radius: 16px;
+        font-size: 1.2rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        white-space: nowrap;
+        transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, transform 0.12s ease;
+      }
+
+      .action-btn:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+
+      .action-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .action-btn svg {
+        width: 22px;
+        height: 22px;
+        flex-shrink: 0;
+      }
+
+      .btn-primary {
+        background-color: var(--accent);
+        color: var(--accent-text);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background-color: var(--accent-hover);
+      }
+
+      .btn-secondary {
+        background-color: var(--bg-subtle);
+        border: 1px solid var(--border-strong);
+        color: var(--text-primary);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background-color: var(--border-hairline);
+      }
+
+      .btn-danger {
+        background-color: var(--loud-color);
+        color: #ffffff;
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background-color: #b91c1c;
+      }
+
+      /* Noise Meter Specifics */
+      .noise-score-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .noise-level-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+        font-weight: 800;
+        padding: 8px 20px;
+        border-radius: 12px;
+        background-color: var(--bg-subtle);
+        color: var(--text-secondary);
+        transition: background-color 0.2s ease, color 0.2s ease;
+      }
+
+      .noise-level-label.is-quiet {
+        background-color: var(--quiet-bg);
+        color: var(--quiet-text);
+      }
+
+      .noise-level-label.is-moderate {
+        background-color: var(--moderate-bg);
+        color: var(--moderate-text);
+      }
+
+      .noise-level-label.is-loud {
+        background-color: var(--loud-bg);
+        color: var(--loud-text);
+      }
+
+      .noise-level-label svg {
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
+      }
+
+      /* Segmented Color Gauge Bar */
+      .gauge-container {
+        width: 100%;
+        max-width: 580px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .gauge-bar-wrapper {
+        position: relative;
+        width: 100%;
+        padding-top: 26px;
+      }
+
+      .threshold-pin {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        pointer-events: none;
+        transition: left 0.1s ease-out;
+        z-index: 4;
+      }
+
+      .threshold-pin-label {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: var(--loud-text);
+        white-space: nowrap;
+        line-height: 1.2;
+      }
+
+      .threshold-pin-line {
+        width: 3px;
+        height: 54px;
+        background-color: var(--loud-color);
+        border-radius: 2px;
+        margin-top: 2px;
+      }
+
+      .gauge-segments {
+        display: grid;
+        grid-template-columns: repeat(25, 1fr);
+        gap: 5px;
+        height: 44px;
+        padding: 6px;
+        border-radius: 14px;
+        background-color: var(--bg-subtle);
+        border: 1px solid var(--border-hairline);
+      }
+
+      .gauge-segment {
+        border-radius: 5px;
+        background-color: var(--border-hairline);
+        transition: background-color 0.08s ease, opacity 0.08s ease;
+        opacity: 0.45;
+      }
+
+      .gauge-segment.lit {
+        opacity: 1;
+      }
+
+      .gauge-segment.zone-quiet.lit {
+        background-color: var(--quiet-color);
+      }
+
+      .gauge-segment.zone-moderate.lit {
+        background-color: var(--moderate-color);
+      }
+
+      .gauge-segment.zone-loud.lit {
+        background-color: var(--loud-color);
+      }
+
+      .gauge-scale-legend {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-muted);
+      }
+
+      .legend-zones {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      .legend-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+      }
+
+      /* Threshold Slider */
+      .threshold-control {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .threshold-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .threshold-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .threshold-value-readout {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--loud-text);
+      }
+
+      .slider-wrap {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .threshold-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 14px;
+        border-radius: 999px;
+        background: var(--bg-subtle);
+        border: 1px solid var(--border-strong);
+        cursor: pointer;
+      }
+
+      .threshold-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: var(--accent);
+        border: 3px solid var(--bg-surface);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.28);
+        cursor: pointer;
+        transition: transform 0.12s ease;
+      }
+
+      .threshold-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.08);
+      }
+
+      .threshold-slider::-moz-range-thumb {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: var(--accent);
+        border: 3px solid var(--bg-surface);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.28);
+        cursor: pointer;
+      }
+
+      .mic-action-row {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .mic-btn {
+        width: 100%;
+        min-height: 60px;
+        border-radius: 16px;
+        font-size: 1.25rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        transition: background-color 0.15s ease, transform 0.12s ease;
+      }
+
+      .mic-btn svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .mic-error-msg {
+        display: none;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background-color: var(--loud-bg);
+        color: var(--loud-text);
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .mic-error-msg.visible {
+        display: block;
+      }
+
+      /* Timer Completion Alert Inline Strip */
+      .timer-complete-strip {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 10px 18px;
+        border-radius: 12px;
+        background-color: var(--loud-bg);
+        color: var(--loud-text);
+        font-size: 1.15rem;
+        font-weight: 800;
+      }
+
+      .timer-complete-strip.visible {
+        display: inline-flex;
+      }
+
+      @keyframes gentleAttention {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.03);
+        }
+      }
+
+      .pulse-finish {
+        animation: gentleAttention 1s ease-in-out infinite;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .pulse-finish {
+          animation: none;
+        }
+        * {
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* Responsive Breakpoints */
+      @media (max-width: 1024px) {
+        .app-shell {
+          padding: 16px;
+        }
+        .workspace-grid {
+          grid-template-columns: 1fr;
+        }
+        .panel-card {
+          padding: 22px 20px;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .top-header {
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        .brand-meta {
+          display: none;
+        }
+        .action-row {
+          grid-template-columns: 1fr;
+        }
+        .preset-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .noise-warning-banner {
+          width: calc(100% - 24px);
+          padding: 14px 18px;
+          font-size: 1.25rem;
+          white-space: normal;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- High-Visibility Classroom Noise Warning Banner -->
+    <div id="noiseWarningBanner" class="noise-warning-banner" role="alert" aria-live="assertive">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+        <line x1="12" y1="9" x2="12" y2="13" />
+        <line x1="12" y1="17" x2="12.01" y2="17" />
+      </svg>
+      <span>조금만 조용히 해주세요!</span>
+    </div>
+
+    <div id="toastNotice" class="toast-notice" role="status" aria-live="polite"></div>
+
+    <div class="app-shell">
+      <header class="top-header">
+        <div class="brand-group">
+          <h1 class="brand-title">수업 타이머 &amp; 교실 소음 측정기</h1>
+          <span class="brand-meta">전자칠판 스마트보드 학습 도우미</span>
+        </div>
+
+        <div class="header-actions">
+          <button id="themeToggleBtn" type="button" class="header-btn" aria-label="다크 모드 전환">
+            <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2" />
+              <path d="M12 20v2" />
+              <path d="m4.93 4.93 1.41 1.41" />
+              <path d="m17.66 17.66 1.41 1.41" />
+              <path d="M2 12h2" />
+              <path d="M20 12h2" />
+              <path d="m6.34 17.66-1.41 1.41" />
+              <path d="m19.07 4.93-1.41 1.41" />
+            </svg>
+            <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
+            <span id="themeToggleText">다크 모드</span>
+          </button>
+
+          <button id="fullscreenBtn" type="button" class="header-btn" aria-label="전체 화면 전환">
+            <svg id="fsIconEnter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+              <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+              <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+              <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+            </svg>
+            <svg id="fsIconExit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none" aria-hidden="true">
+              <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+              <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+              <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+              <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+            </svg>
+            <span id="fullscreenText">전체 화면</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace-grid">
+        <!-- Left Column: Class Timer -->
+        <section id="timerPanel" class="panel-card" aria-labelledby="timerHeading">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="13" r="8" />
+                <path d="M12 9v4l2 2" />
+                <path d="M5 3 2 6" />
+                <path d="m22 6-3-3" />
+                <path d="M12 5V3" />
+                <path d="M10 2h4" />
+              </svg>
+              <h2 id="timerHeading" class="panel-title">수업 타이머</h2>
+            </div>
+            <div id="timerStatusText" class="panel-status-text">준비됨</div>
+          </div>
+
+          <div class="display-stage">
+            <div id="timerDisplay" class="giant-readout" aria-live="polite">05:00</div>
+
+            <div id="timerCompleteStrip" class="timer-complete-strip">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              </svg>
+              <span>활동 시간이 종료되었습니다!</span>
+            </div>
+
+            <div class="timer-progress-wrap">
+              <div class="timer-progress-track">
+                <div id="timerProgressBar" class="timer-progress-fill"></div>
+              </div>
+              <div class="timer-subinfo">
+                <span id="timerSetLabel">설정 시간: 05분 00초</span>
+                <span id="timerPercentLabel">100% 남음</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls-section">
+            <div class="preset-row" role="group" aria-label="빠른 시간 설정">
+              <button type="button" class="preset-btn" data-minutes="1">1분</button>
+              <button type="button" class="preset-btn" data-minutes="3">3분</button>
+              <button type="button" class="preset-btn active" data-minutes="5">5분</button>
+              <button type="button" class="preset-btn" data-minutes="10">10분</button>
+            </div>
+
+            <div class="custom-time-row">
+              <span class="custom-time-label">직접 입력</span>
+              <div class="time-input-group">
+                <input
+                  id="inputMinutes"
+                  type="number"
+                  min="0"
+                  max="99"
+                  value="5"
+                  class="time-input"
+                  aria-label="분 입력"
+                />
+                <span class="time-unit">분</span>
+              </div>
+              <div class="time-input-group">
+                <input
+                  id="inputSeconds"
+                  type="number"
+                  min="0"
+                  max="59"
+                  value="0"
+                  class="time-input"
+                  aria-label="초 입력"
+                />
+                <span class="time-unit">초</span>
+              </div>
+              <button id="applyCustomTimeBtn" type="button" class="apply-btn">적용</button>
+
+              <button id="testSoundBtn" type="button" class="sound-test-btn" title="종료음 미리듣기">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+                <span>종료음 확인</span>
+              </button>
+            </div>
+
+            <div class="action-row">
+              <button id="timerStartBtn" type="button" class="action-btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <polygon points="6 4 20 12 6 20 6 4" />
+                </svg>
+                <span id="timerStartText">시작</span>
+              </button>
+
+              <button id="timerPauseBtn" type="button" class="action-btn btn-secondary" disabled>
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <rect x="6" y="4" width="4" height="16" rx="1" />
+                  <rect x="14" y="4" width="4" height="16" rx="1" />
+                </svg>
+                <span>일시정지</span>
+              </button>
+
+              <button id="timerResetBtn" type="button" class="action-btn btn-secondary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
+                </svg>
+                <span>초기화</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Column: Classroom Noise Meter -->
+        <section id="noisePanel" class="panel-card" aria-labelledby="noiseHeading">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="22" />
+              </svg>
+              <h2 id="noiseHeading" class="panel-title">교실 소음 측정기</h2>
+            </div>
+            <div id="micStatusText" class="panel-status-text">마이크 꺼짐</div>
+          </div>
+
+          <div class="display-stage">
+            <div class="noise-score-wrap">
+              <div id="noiseValueDisplay" class="giant-readout" aria-live="polite">0</div>
+              <div id="noiseLevelBadge" class="noise-level-label">
+                <svg id="noiseStateIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                </svg>
+                <span id="noiseLevelText">측정 대기 중</span>
+              </div>
+            </div>
+
+            <div class="gauge-container">
+              <div class="gauge-bar-wrapper">
+                <div id="thresholdPin" class="threshold-pin" style="left: 70%">
+                  <span id="thresholdPinText" class="threshold-pin-label">기준 70</span>
+                  <span class="threshold-pin-line"></span>
+                </div>
+                <div id="gaugeSegments" class="gauge-segments" aria-label="실시간 소음 게이지"></div>
+              </div>
+
+              <div class="gauge-scale-legend">
+                <span>0</span>
+                <div class="legend-zones">
+                  <span class="legend-item">
+                    <span class="legend-swatch" style="background-color: var(--quiet-color)"></span>
+                    조용함
+                  </span>
+                  <span class="legend-item">
+                    <span class="legend-swatch" style="background-color: var(--moderate-color)"></span>
+                    보통
+                  </span>
+                  <span class="legend-item">
+                    <span class="legend-swatch" style="background-color: var(--loud-color)"></span>
+                    시끄러움
+                  </span>
+                </div>
+                <span>100</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls-section">
+            <div class="threshold-control">
+              <div class="threshold-header">
+                <label for="thresholdSlider" class="threshold-title">경고 기준치 설정</label>
+                <span id="thresholdValueDisplay" class="threshold-value-readout">70</span>
+              </div>
+              <div class="slider-wrap">
+                <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted)">10</span>
+                <input
+                  id="thresholdSlider"
+                  type="range"
+                  min="10"
+                  max="95"
+                  step="1"
+                  value="70"
+                  class="threshold-slider"
+                  aria-label="경고 기준치 조절 슬라이더"
+                />
+                <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted)">95</span>
+              </div>
+            </div>
+
+            <div class="mic-action-row">
+              <button id="micToggleBtn" type="button" class="mic-btn btn-primary">
+                <svg id="micIconOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                </svg>
+                <svg id="micIconOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="display: none" aria-hidden="true">
+                  <line x1="2" y1="2" x2="22" y2="22" />
+                  <path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2" />
+                  <path d="M5 10v2a7 7 0 0 0 12 5" />
+                  <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33" />
+                  <path d="M9 9v3a3 3 0 0 0 5.12 2.12" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                </svg>
+                <span id="micToggleText">마이크 켜기</span>
+              </button>
+              <div id="micErrorMsg" class="mic-error-msg" role="alert"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+
+        // ============================================================
+        // 1. Utility & Shared AudioContext (Web Audio API)
+        // ============================================================
+        let sharedAudioCtx = null;
+        let toastTimer = null;
+
+        function getAudioContext() {
+          if (!sharedAudioCtx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+              sharedAudioCtx = new AudioCtx();
+            }
+          }
+          if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
+            sharedAudioCtx.resume().catch(function () {});
+          }
+          return sharedAudioCtx;
+        }
+
+        function showToast(message) {
+          const toast = document.getElementById('toastNotice');
+          toast.textContent = message;
+          toast.classList.add('visible');
+          if (toastTimer) clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () {
+            toast.classList.remove('visible');
+          }, 2600);
+        }
+
+        /**
+         * Plays a clear, pleasant school bell / chime melody using Web Audio API
+         * without requiring any external mp3 files.
+         */
+        function playClearChime() {
+          const ctx = getAudioContext();
+          if (!ctx) return;
+
+          const now = ctx.currentTime;
+          // Bright C-major ascending chime sequence repeated cleanly
+          const notes = [
+            { freq: 523.25, start: 0.0, dur: 0.45 },   // C5
+            { freq: 659.25, start: 0.18, dur: 0.45 },  // E5
+            { freq: 783.99, start: 0.36, dur: 0.45 },  // G5
+            { freq: 1046.5, start: 0.56, dur: 0.85 },  // C6
+            { freq: 523.25, start: 1.55, dur: 0.45 },  // C5
+            { freq: 659.25, start: 1.73, dur: 0.45 },  // E5
+            { freq: 783.99, start: 1.91, dur: 0.45 },  // G5
+            { freq: 1046.5, start: 2.11, dur: 1.1 }    // C6
+          ];
+
+          notes.forEach(function (note) {
+            const oscMain = ctx.createOscillator();
+            const oscHarmonic = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            oscMain.type = 'sine';
+            oscMain.frequency.setValueAtTime(note.freq, now + note.start);
+
+            // Subtle overtone for bell clarity
+            oscHarmonic.type = 'triangle';
+            oscHarmonic.frequency.setValueAtTime(note.freq * 2, now + note.start);
+
+            const harmonicGain = ctx.createGain();
+            harmonicGain.gain.setValueAtTime(0.16, now + note.start);
+
+            gainNode.gain.setValueAtTime(0.0001, now + note.start);
+            gainNode.gain.linearRampToValueAtTime(0.32, now + note.start + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + note.start + note.dur);
+
+            oscMain.connect(gainNode);
+            oscHarmonic.connect(harmonicGain);
+            harmonicGain.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            oscMain.start(now + note.start);
+            oscHarmonic.start(now + note.start);
+            oscMain.stop(now + note.start + note.dur + 0.05);
+            oscHarmonic.stop(now + note.start + note.dur + 0.05);
+          });
+        }
+
+        // ============================================================
+        // 2. Dark Mode & Fullscreen Controls
+        // ============================================================
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeToggleText = document.getElementById('themeToggleText');
+        const themeIconSun = document.getElementById('themeIconSun');
+        const themeIconMoon = document.getElementById('themeIconMoon');
+
+        function applyTheme(isDark) {
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            themeToggleText.textContent = '라이트 모드';
+            themeIconSun.style.display = 'block';
+            themeIconMoon.style.display = 'none';
+          } else {
+            document.documentElement.classList.remove('dark');
+            themeToggleText.textContent = '다크 모드';
+            themeIconSun.style.display = 'none';
+            themeIconMoon.style.display = 'block';
+          }
+          try {
+            localStorage.setItem('classroom_theme', isDark ? 'dark' : 'light');
+          } catch (e) {}
+        }
+
+        (function initTheme() {
+          let saved = null;
+          try {
+            saved = localStorage.getItem('classroom_theme');
+          } catch (e) {}
+          const prefersDark =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          applyTheme(saved ? saved === 'dark' : prefersDark);
+        })();
+
+        themeToggleBtn.addEventListener('click', function () {
+          const isDark = document.documentElement.classList.contains('dark');
+          applyTheme(!isDark);
+        });
+
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const fullscreenText = document.getElementById('fullscreenText');
+        const fsIconEnter = document.getElementById('fsIconEnter');
+        const fsIconExit = document.getElementById('fsIconExit');
+
+        function updateFullscreenUI() {
+          const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+          if (isFs) {
+            fullscreenText.textContent = '전체 화면 해제';
+            fsIconEnter.style.display = 'none';
+            fsIconExit.style.display = 'block';
+          } else {
+            fullscreenText.textContent = '전체 화면';
+            fsIconEnter.style.display = 'block';
+            fsIconExit.style.display = 'none';
+          }
+        }
+
+        fullscreenBtn.addEventListener('click', function () {
+          const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+          if (!isFs) {
+            const el = document.documentElement;
+            const req = el.requestFullscreen || el.webkitRequestFullscreen;
+            if (req) {
+              Promise.resolve(req.call(el)).catch(function () {
+                showToast('이 환경에서는 브라우저 전체 화면이 제한되어 있습니다.');
+              });
+            } else {
+              showToast('현재 브라우저에서 전체 화면을 지원하지 않습니다.');
+            }
+          } else {
+            const exit = document.exitFullscreen || document.webkitExitFullscreen;
+            if (exit) {
+              Promise.resolve(exit.call(document)).catch(function () {});
+            }
+          }
+        });
+
+        document.addEventListener('fullscreenchange', updateFullscreenUI);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenUI);
+
+        // ============================================================
+        // 3. Class Timer Logic
+        // ============================================================
+        const timerPanel = document.getElementById('timerPanel');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timerStatusText = document.getElementById('timerStatusText');
+        const timerCompleteStrip = document.getElementById('timerCompleteStrip');
+        const timerProgressBar = document.getElementById('timerProgressBar');
+        const timerSetLabel = document.getElementById('timerSetLabel');
+        const timerPercentLabel = document.getElementById('timerPercentLabel');
+
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const inputMinutes = document.getElementById('inputMinutes');
+        const inputSeconds = document.getElementById('inputSeconds');
+        const applyCustomTimeBtn = document.getElementById('applyCustomTimeBtn');
+        const testSoundBtn = document.getElementById('testSoundBtn');
+
+        const timerStartBtn = document.getElementById('timerStartBtn');
+        const timerStartText = document.getElementById('timerStartText');
+        const timerPauseBtn = document.getElementById('timerPauseBtn');
+        const timerResetBtn = document.getElementById('timerResetBtn');
+
+        let totalDurationSec = 300; // Default 5 minutes
+        let remainingSec = 300;
+        let timerState = 'idle'; // 'idle' | 'running' | 'paused' | 'finished'
+        let endTimestampMs = 0;
+        let timerTickId = null;
+
+        function formatMMSS(sec) {
+          const safe = Math.max(0, Math.ceil(sec));
+          const m = Math.floor(safe / 60);
+          const s = safe % 60;
+          return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        function formatKoreanDuration(sec) {
+          const m = Math.floor(sec / 60);
+          const s = sec % 60;
+          return String(m).padStart(2, '0') + '분 ' + String(s).padStart(2, '0') + '초';
+        }
+
+        function updatePresetHighlight(sec) {
+          presetBtns.forEach(function (btn) {
+            const mins = Number(btn.getAttribute('data-minutes'));
+            if (mins * 60 === sec) {
+              btn.classList.add('active');
+            } else {
+              btn.classList.remove('active');
+            }
+          });
+        }
+
+        function renderTimerUI() {
+          const displayText = formatMMSS(remainingSec);
+          timerDisplay.textContent = displayText;
+
+          const pct = totalDurationSec > 0 ? Math.max(0, Math.min(100, (remainingSec / totalDurationSec) * 100)) : 0;
+          timerProgressBar.style.width = pct.toFixed(1) + '%';
+          timerPercentLabel.textContent = Math.ceil(pct) + '% 남음';
+          timerSetLabel.textContent = '설정 시간: ' + formatKoreanDuration(totalDurationSec);
+
+          timerDisplay.classList.remove('is-warning', 'is-finished', 'pulse-finish');
+          timerProgressBar.classList.remove('is-warning', 'is-finished');
+          timerStatusText.classList.remove('state-running', 'state-warning', 'state-finished');
+          timerPanel.classList.remove('timer-finished');
+          timerCompleteStrip.classList.remove('visible');
+
+          if (timerState === 'running') {
+            if (remainingSec <= 10 && remainingSec > 0) {
+              timerDisplay.classList.add('is-warning');
+              timerProgressBar.classList.add('is-warning');
+              timerStatusText.classList.add('state-warning');
+              timerStatusText.textContent = '곧 종료됩니다';
+            } else {
+              timerStatusText.classList.add('state-running');
+              timerStatusText.textContent = '진행 중';
+            }
+            timerStartBtn.disabled = true;
+            timerStartText.textContent = '진행 중';
+            timerPauseBtn.disabled = false;
+          } else if (timerState === 'paused') {
+            timerStatusText.textContent = '일시정지';
+            timerStartBtn.disabled = false;
+            timerStartText.textContent = '계속';
+            timerPauseBtn.disabled = true;
+          } else if (timerState === 'finished') {
+            timerDisplay.classList.add('is-finished', 'pulse-finish');
+            timerProgressBar.classList.add('is-finished');
+            timerStatusText.classList.add('state-finished');
+            timerStatusText.textContent = '종료됨';
+            timerPanel.classList.add('timer-finished');
+            timerCompleteStrip.classList.add('visible');
+            timerStartBtn.disabled = true;
+            timerStartText.textContent = '시작';
+            timerPauseBtn.disabled = true;
+          } else {
+            timerStatusText.textContent = '준비됨';
+            timerStartBtn.disabled = totalDurationSec <= 0;
+            timerStartText.textContent = '시작';
+            timerPauseBtn.disabled = true;
+          }
+        }
+
+        function stopTimerInterval() {
+          if (timerTickId !== null) {
+            clearInterval(timerTickId);
+            timerTickId = null;
+          }
+        }
+
+        function setTimerDuration(sec) {
+          stopTimerInterval();
+          const clamped = Math.max(1, Math.min(99 * 60 + 59, Math.floor(sec)));
+          totalDurationSec = clamped;
+          remainingSec = clamped;
+          timerState = 'idle';
+          inputMinutes.value = Math.floor(clamped / 60);
+          inputSeconds.value = clamped % 60;
+          updatePresetHighlight(clamped);
+          renderTimerUI();
+        }
+
+        function startTimer() {
+          if (timerState === 'running') return;
+          if (remainingSec <= 0) {
+            remainingSec = totalDurationSec;
+          }
+          if (remainingSec <= 0) return;
+
+          // Unlock AudioContext on user gesture
+          getAudioContext();
+
+          timerState = 'running';
+          endTimestampMs = Date.now() + remainingSec * 1000;
+          renderTimerUI();
+
+          stopTimerInterval();
+          timerTickId = setInterval(function () {
+            const diffMs = endTimestampMs - Date.now();
+            if (diffMs <= 0) {
+              remainingSec = 0;
+              timerState = 'finished';
+              stopTimerInterval();
+              renderTimerUI();
+              playClearChime();
+            } else {
+              const nextSec = Math.ceil(diffMs / 1000);
+              if (nextSec !== remainingSec) {
+                remainingSec = nextSec;
+                renderTimerUI();
+              }
+            }
+          }, 150);
+        }
+
+        function pauseTimer() {
+          if (timerState !== 'running') return;
+          const diffMs = endTimestampMs - Date.now();
+          remainingSec = Math.max(0, Math.ceil(diffMs / 1000));
+          stopTimerInterval();
+          timerState = 'paused';
+          renderTimerUI();
+        }
+
+        function resetTimer() {
+          stopTimerInterval();
+          remainingSec = totalDurationSec;
+          timerState = 'idle';
+          renderTimerUI();
+        }
+
+        presetBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            getAudioContext();
+            const mins = Number(btn.getAttribute('data-minutes'));
+            setTimerDuration(mins * 60);
+          });
+        });
+
+        function applyCustomInputs() {
+          getAudioContext();
+          let m = parseInt(inputMinutes.value, 10);
+          let s = parseInt(inputSeconds.value, 10);
+          if (isNaN(m) || m < 0) m = 0;
+          if (m > 99) m = 99;
+          if (isNaN(s) || s < 0) s = 0;
+          if (s > 59) s = 59;
+
+          const total = m * 60 + s;
+          if (total <= 0) {
+            showToast('1초 이상 시간을 입력해 주세요.');
+            inputMinutes.value = Math.floor(totalDurationSec / 60);
+            inputSeconds.value = totalDurationSec % 60;
+            return;
+          }
+          setTimerDuration(total);
+        }
+
+        applyCustomTimeBtn.addEventListener('click', applyCustomInputs);
+        inputMinutes.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') applyCustomInputs();
+        });
+        inputSeconds.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') applyCustomInputs();
+        });
+
+        testSoundBtn.addEventListener('click', function () {
+          playClearChime();
+          showToast('종료음을 재생했습니다.');
+        });
+
+        timerStartBtn.addEventListener('click', startTimer);
+        timerPauseBtn.addEventListener('click', pauseTimer);
+        timerResetBtn.addEventListener('click', resetTimer);
+
+        // Initialize timer UI
+        renderTimerUI();
+
+        // ============================================================
+        // 4. Classroom Noise Meter Logic
+        // ============================================================
+        const noisePanel = document.getElementById('noisePanel');
+        const noiseWarningBanner = document.getElementById('noiseWarningBanner');
+        const micStatusText = document.getElementById('micStatusText');
+        const noiseValueDisplay = document.getElementById('noiseValueDisplay');
+        const noiseLevelBadge = document.getElementById('noiseLevelBadge');
+        const noiseLevelText = document.getElementById('noiseLevelText');
+        const gaugeSegmentsEl = document.getElementById('gaugeSegments');
+        const thresholdPin = document.getElementById('thresholdPin');
+        const thresholdPinText = document.getElementById('thresholdPinText');
+        const thresholdSlider = document.getElementById('thresholdSlider');
+        const thresholdValueDisplay = document.getElementById('thresholdValueDisplay');
+        const micToggleBtn = document.getElementById('micToggleBtn');
+        const micToggleText = document.getElementById('micToggleText');
+        const micIconOn = document.getElementById('micIconOn');
+        const micIconOff = document.getElementById('micIconOff');
+        const micErrorMsg = document.getElementById('micErrorMsg');
+
+        const TOTAL_SEGMENTS = 25;
+        const segmentNodes = [];
+        for (let i = 0; i < TOTAL_SEGMENTS; i++) {
+          const seg = document.createElement('div');
+          seg.className = 'gauge-segment';
+          gaugeSegmentsEl.appendChild(seg);
+          segmentNodes.push(seg);
+        }
+
+        let warningThreshold = Number(thresholdSlider.value) || 70;
+        let micActive = false;
+        let mediaStream = null;
+        let analyserNode = null;
+        let micSourceNode = null;
+        let dataArray = null;
+        let rafId = null;
+        let smoothedNoise = 0;
+        let lastLoudTimestamp = 0;
+
+        function updateSegmentZones() {
+          const quietCutoff = warningThreshold * 0.65;
+          for (let i = 0; i < TOTAL_SEGMENTS; i++) {
+            const segPercent = ((i + 1) / TOTAL_SEGMENTS) * 100;
+            const seg = segmentNodes[i];
+            seg.classList.remove('zone-quiet', 'zone-moderate', 'zone-loud');
+            if (segPercent >= warningThreshold) {
+              seg.classList.add('zone-loud');
+            } else if (segPercent >= quietCutoff) {
+              seg.classList.add('zone-moderate');
+            } else {
+              seg.classList.add('zone-quiet');
+            }
+          }
+          thresholdPin.style.left = warningThreshold + '%';
+          thresholdPinText.textContent = '기준 ' + warningThreshold;
+          thresholdValueDisplay.textContent = String(warningThreshold);
+        }
+
+        function renderNoiseLevel(level) {
+          const rounded = Math.max(0, Math.min(100, Math.round(level)));
+          noiseValueDisplay.textContent = String(rounded);
+
+          const litCount = Math.round((rounded / 100) * TOTAL_SEGMENTS);
+          for (let i = 0; i < TOTAL_SEGMENTS; i++) {
+            if (i < litCount) {
+              segmentNodes[i].classList.add('lit');
+            } else {
+              segmentNodes[i].classList.remove('lit');
+            }
+          }
+
+          noiseValueDisplay.classList.remove('is-quiet', 'is-moderate', 'is-loud');
+          noiseLevelBadge.classList.remove('is-quiet', 'is-moderate', 'is-loud');
+          micStatusText.classList.remove('state-quiet', 'state-warning', 'state-loud');
+          noisePanel.classList.remove('noise-loud');
+
+          if (!micActive) {
+            noiseLevelText.textContent = '측정 대기 중';
+            micStatusText.textContent = '마이크 꺼짐';
+            noiseWarningBanner.classList.remove('visible');
+            return;
+          }
+
+          const quietCutoff = warningThreshold * 0.65;
+          const now = Date.now();
+
+          if (rounded >= warningThreshold) {
+            lastLoudTimestamp = now;
+            noiseValueDisplay.classList.add('is-loud');
+            noiseLevelBadge.classList.add('is-loud');
+            micStatusText.classList.add('state-loud');
+            noisePanel.classList.add('noise-loud');
+            noiseLevelText.textContent = '시끄러움';
+            micStatusText.textContent = '기준치 초과';
+            noiseWarningBanner.classList.add('visible');
+          } else {
+            // Keep warning banner visible briefly (1.2s) so students can read it cleanly without flicker
+            if (now - lastLoudTimestamp < 1200 && lastLoudTimestamp > 0) {
+              noiseWarningBanner.classList.add('visible');
+            } else {
+              noiseWarningBanner.classList.remove('visible');
+            }
+
+            if (rounded >= quietCutoff) {
+              noiseValueDisplay.classList.add('is-moderate');
+              noiseLevelBadge.classList.add('is-moderate');
+              micStatusText.classList.add('state-warning');
+              noiseLevelText.textContent = '보통';
+              micStatusText.textContent = '실시간 측정 중';
+            } else {
+              noiseValueDisplay.classList.add('is-quiet');
+              noiseLevelBadge.classList.add('is-quiet');
+              micStatusText.classList.add('state-quiet');
+              noiseLevelText.textContent = '조용함';
+              micStatusText.textContent = '실시간 측정 중';
+            }
+          }
+        }
+
+        function sampleNoiseFrame() {
+          if (!micActive || !analyserNode || !dataArray) return;
+
+          analyserNode.getByteTimeDomainData(dataArray);
+          let sumSquares = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            const normalized = (dataArray[i] - 128) / 128;
+            sumSquares += normalized * normalized;
+          }
+          const rms = Math.sqrt(sumSquares / dataArray.length);
+
+          // Convert RMS into intuitive 0~100 classroom noise scale
+          // Typical quiet room rms ~0.004-0.012, speaking ~0.04-0.12, shouting >0.25
+          let score = 0;
+          if (rms > 0.0015) {
+            const db = 20 * Math.log10(rms); // ~ -56 dBFS (quiet) to 0 dBFS (max)
+            score = ((db + 54) / 48) * 100;
+          }
+          score = Math.max(0, Math.min(100, score));
+
+          // Fast attack, smooth decay for crisp classroom readability
+          const alpha = score > smoothedNoise ? 0.35 : 0.14;
+          smoothedNoise = smoothedNoise + alpha * (score - smoothedNoise);
+
+          renderNoiseLevel(smoothedNoise);
+          rafId = requestAnimationFrame(sampleNoiseFrame);
+        }
+
+        async function startMicrophone() {
+          micErrorMsg.classList.remove('visible');
+          micErrorMsg.textContent = '';
+
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            micErrorMsg.textContent = '이 브라우저에서는 마이크 기능을 지원하지 않습니다.';
+            micErrorMsg.classList.add('visible');
+            return;
+          }
+
+          try {
+            const ctx = getAudioContext();
+            if (!ctx) {
+              throw new Error('AudioContext unsupported');
+            }
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false
+              }
+            });
+
+            micSourceNode = ctx.createMediaStreamSource(mediaStream);
+            analyserNode = ctx.createAnalyser();
+            analyserNode.fftSize = 1024;
+            analyserNode.smoothingTimeConstant = 0.75;
+            micSourceNode.connect(analyserNode);
+
+            dataArray = new Uint8Array(analyserNode.fftSize);
+            micActive = true;
+            smoothedNoise = 0;
+            lastLoudTimestamp = 0;
+
+            micToggleBtn.classList.remove('btn-primary');
+            micToggleBtn.classList.add('btn-danger');
+            micToggleText.textContent = '마이크 끄기';
+            micIconOn.style.display = 'none';
+            micIconOff.style.display = 'block';
+
+            sampleNoiseFrame();
+          } catch (err) {
+            micErrorMsg.textContent =
+              '마이크 접근 권한이 거부되었거나 연결된 마이크가 없습니다. 브라우저 주소창 옆 권한 설정을 확인해 주세요.';
+            micErrorMsg.classList.add('visible');
+            stopMicrophone();
+          }
+        }
+
+        function stopMicrophone() {
+          micActive = false;
+          if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+          if (micSourceNode) {
+            try {
+              micSourceNode.disconnect();
+            } catch (e) {}
+            micSourceNode = null;
+          }
+          if (analyserNode) {
+            try {
+              analyserNode.disconnect();
+            } catch (e) {}
+            analyserNode = null;
+          }
+          if (mediaStream) {
+            mediaStream.getTracks().forEach(function (track) {
+              track.stop();
+            });
+            mediaStream = null;
+          }
+
+          smoothedNoise = 0;
+          lastLoudTimestamp = 0;
+          micToggleBtn.classList.remove('btn-danger');
+          micToggleBtn.classList.add('btn-primary');
+          micToggleText.textContent = '마이크 켜기';
+          micIconOn.style.display = 'block';
+          micIconOff.style.display = 'none';
+          renderNoiseLevel(0);
+        }
+
+        micToggleBtn.addEventListener('click', function () {
+          if (micActive) {
+            stopMicrophone();
+          } else {
+            startMicrophone();
+          }
+        });
+
+        thresholdSlider.addEventListener('input', function () {
+          warningThreshold = Number(thresholdSlider.value);
+          updateSegmentZones();
+          renderNoiseLevel(smoothedNoise);
+        });
+
+        // Initialize Noise Gauge
+        updateSegmentZones();
+        renderNoiseLevel(0);
+      })();
+    </script>
+  </body>
+</html>
